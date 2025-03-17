@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, Mic, Volume2, HelpCircle } from 'lucide-react';
+import { Send, Bot, Mic, Volume2, VolumeX, HelpCircle } from 'lucide-react';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -32,10 +32,12 @@ export default function AIChat({ initialMessage, generatePrompt, autoSpeak = fal
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [isAutoSpeakEnabled, setIsAutoSpeakEnabled] = useState(autoSpeak);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const currentlySpeakingRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   useEffect(() => {
-    if (autoSpeak) {
+    if (autoSpeak && isAutoSpeakEnabled) {
       speakMessage(initialMessage);
     }
   }, []);
@@ -67,12 +69,36 @@ export default function AIChat({ initialMessage, generatePrompt, autoSpeak = fal
     }
   };
 
+  const stopSpeaking = () => {
+    if (currentlySpeakingRef.current) {
+      window.speechSynthesis.cancel();
+      currentlySpeakingRef.current = null;
+    }
+  };
+
   const speakMessage = (text: string) => {
     if ('speechSynthesis' in window) {
+      // Parar qualquer fala em andamento
+      stopSpeaking();
+
       const cleanText = cleanTextForSpeech(text);
       const utterance = new SpeechSynthesisUtterance(cleanText);
       utterance.lang = 'pt-BR';
+      
+      currentlySpeakingRef.current = utterance;
+      
+      utterance.onend = () => {
+        currentlySpeakingRef.current = null;
+      };
+
       window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  const toggleAutoSpeak = () => {
+    setIsAutoSpeakEnabled(!isAutoSpeakEnabled);
+    if (isAutoSpeakEnabled) {
+      stopSpeaking();
     }
   };
 
@@ -130,7 +156,9 @@ export default function AIChat({ initialMessage, generatePrompt, autoSpeak = fal
     try {
       const aiResponse = await generateResponse(userMessage);
       setMessages(prev => [...prev, { role: 'assistant', content: aiResponse }]);
-      speakMessage(aiResponse);
+      if (isAutoSpeakEnabled) {
+        speakMessage(aiResponse);
+      }
     } catch (error) {
       console.error('Error:', error);
       setMessages(prev => [...prev, { 
@@ -149,13 +177,25 @@ export default function AIChat({ initialMessage, generatePrompt, autoSpeak = fal
           <Bot className="w-6 h-6" />
           Assistente IA
         </h2>
-        <button
-          onClick={() => setShowHelp(!showHelp)}
-          className="text-purple-300 hover:text-purple-200 transition"
-          title="Ajuda"
-        >
-          <HelpCircle className="w-6 h-6" />
-        </button>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={toggleAutoSpeak}
+            className={`text-purple-300 hover:text-purple-200 transition flex items-center gap-2 ${
+              isAutoSpeakEnabled ? 'bg-purple-500/30' : 'bg-black/30'
+            } px-3 py-1 rounded-lg`}
+            title={isAutoSpeakEnabled ? "Desativar áudio automático" : "Ativar áudio automático"}
+          >
+            {isAutoSpeakEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+            {isAutoSpeakEnabled ? "Áudio Ligado" : "Áudio Desligado"}
+          </button>
+          <button
+            onClick={() => setShowHelp(!showHelp)}
+            className="text-purple-300 hover:text-purple-200 transition"
+            title="Ajuda"
+          >
+            <HelpCircle className="w-6 h-6" />
+          </button>
+        </div>
       </div>
 
       {showHelp && (
@@ -163,7 +203,8 @@ export default function AIChat({ initialMessage, generatePrompt, autoSpeak = fal
           <h3 className="font-bold mb-2">Como usar o Assistente IA:</h3>
           <ul className="list-disc list-inside space-y-2 text-sm">
             <li>Digite sua pergunta no campo de texto ou use o botão do microfone para falar</li>
-            <li>Clique no botão de alto-falante para ouvir as respostas</li>
+            <li>Use o botão de áudio para ativar/desativar a leitura automática das respostas</li>
+            <li>Clique no botão de alto-falante em cada mensagem para ouvir individualmente</li>
             <li>O assistente irá guiar você durante o uso da plataforma</li>
             <li>Faça perguntas sobre DNA, espécies ou elementos químicos</li>
           </ul>
