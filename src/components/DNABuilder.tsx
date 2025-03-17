@@ -4,11 +4,40 @@ import AIChat from './AIChat';
 
 const NUCLEOTIDES = ['A', 'T', 'C', 'G'];
 
+// Exemplos de características baseadas em padrões de DNA
+const DNA_PATTERNS = {
+  'ATAT': 'Resistência a temperaturas extremas',
+  'GCGC': 'Alta capacidade de regeneração',
+  'TGCA': 'Adaptação a diferentes ambientes',
+  'AAAA': 'Pigmentação intensa',
+  'GGGG': 'Força muscular aumentada',
+  'CCCC': 'Sistema imunológico robusto',
+  'TTTT': 'Longevidade elevada',
+  'AGAG': 'Metabolismo acelerado',
+  'CTCT': 'Sentidos aguçados',
+  'TATA': 'Reprodução rápida'
+};
+
+// Prefixos e sufixos para nomes científicos
+const SCIENTIFIC_PREFIXES = [
+  'Neo', 'Xeno', 'Mega', 'Ultra', 'Crypto', 'Proto', 'Hyper', 'Meta', 'Quantum', 'Bio'
+];
+
+const SCIENTIFIC_SUFFIXES = [
+  'saurus', 'morph', 'raptor', 'titan', 'genesis', 'forma', 'species', 'zoa', 'phyta', 'bacteria'
+];
+
 interface DNASequence {
   id: string;
   sequence: string;
   name: string;
+  scientificName: string;
   description: string;
+  traits: string[];
+  habitat: string;
+  size: string;
+  diet: string;
+  behavior: string;
 }
 
 export default function DNABuilder() {
@@ -33,10 +62,23 @@ export default function DNABuilder() {
 
   const analyzeSequence = async () => {
     if (!currentSequence) return;
-    
     setIsAnalyzing(true);
-    
+
     try {
+      // Análise local de padrões
+      const traits: string[] = [];
+      Object.entries(DNA_PATTERNS).forEach(([pattern, trait]) => {
+        if (currentSequence.includes(pattern)) {
+          traits.push(trait);
+        }
+      });
+
+      // Gerar nome científico
+      const prefix = SCIENTIFIC_PREFIXES[Math.floor(Math.random() * SCIENTIFIC_PREFIXES.length)];
+      const suffix = SCIENTIFIC_SUFFIXES[Math.floor(Math.random() * SCIENTIFIC_SUFFIXES.length)];
+      const scientificName = `${prefix}${suffix} ${currentSequence.substring(0, 4).toLowerCase()}`;
+
+      // Análise com IA
       const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent", {
         method: 'POST',
         headers: {
@@ -46,20 +88,22 @@ export default function DNABuilder() {
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: `Analise esta sequência de DNA: ${currentSequence}
+              text: `Com base nesta sequência de DNA: ${currentSequence}
               
-              1. Crie um nome criativo para uma espécie hipotética que poderia ter este DNA
-              2. Descreva características possíveis desta espécie baseadas na sequência
-              3. Identifique padrões interessantes na sequência
-              4. Sugira possíveis funções biológicas
+              Crie uma criatura fictícia com as seguintes características já identificadas:
+              ${traits.join(', ')}
               
               Responda em formato JSON com os campos:
               {
-                "name": "Nome da espécie",
-                "description": "Descrição das características",
-                "patterns": "Padrões encontrados",
-                "functions": "Funções biológicas sugeridas"
-              }`
+                "name": "Nome comum da espécie",
+                "description": "Descrição física detalhada",
+                "habitat": "Ambiente onde vive",
+                "size": "Tamanho aproximado",
+                "diet": "Tipo de alimentação",
+                "behavior": "Comportamento característico"
+              }
+              
+              Seja criativo e mantenha consistência com os traços genéticos identificados.`
             }]
           }]
         })
@@ -76,7 +120,13 @@ export default function DNABuilder() {
         id: Date.now().toString(),
         sequence: currentSequence,
         name: analysis.name,
-        description: analysis.description
+        scientificName,
+        description: analysis.description,
+        traits,
+        habitat: analysis.habitat,
+        size: analysis.size,
+        diet: analysis.diet,
+        behavior: analysis.behavior
       }]);
 
       setCurrentSequence('');
@@ -143,23 +193,25 @@ export default function DNABuilder() {
                 <ul className="list-disc list-inside mt-1 ml-2">
                   <li>Use os botões A, T, C, G para construir manualmente</li>
                   <li>Use "Gerar Aleatório" para sequências automáticas</li>
-                  <li>A IA analisará e sugerirá espécies possíveis</li>
+                  <li>A IA analisará e criará espécies únicas</li>
                 </ul>
               </div>
               <div>
-                <h4 className="font-semibold text-blue-200">2. Análise de DNA</h4>
+                <h4 className="font-semibold text-blue-200">2. Padrões Especiais</h4>
                 <ul className="list-disc list-inside mt-1 ml-2">
-                  <li>Cada sequência recebe um nome de espécie</li>
-                  <li>A IA identifica características possíveis</li>
-                  <li>Padrões interessantes são destacados</li>
+                  <li>ATAT: Resistência térmica</li>
+                  <li>GCGC: Regeneração</li>
+                  <li>TGCA: Adaptabilidade</li>
+                  <li>E muito mais!</li>
                 </ul>
               </div>
               <div>
-                <h4 className="font-semibold text-blue-200">3. Experimentação</h4>
+                <h4 className="font-semibold text-blue-200">3. Análise Detalhada</h4>
                 <ul className="list-disc list-inside mt-1 ml-2">
-                  <li>Tente diferentes comprimentos de sequência</li>
-                  <li>Compare resultados diferentes</li>
-                  <li>Use o chat para aprender mais</li>
+                  <li>Nome científico único</li>
+                  <li>Características físicas</li>
+                  <li>Habitat e comportamento</li>
+                  <li>Traços especiais</li>
                 </ul>
               </div>
             </div>
@@ -171,9 +223,9 @@ export default function DNABuilder() {
             <h3 className="font-bold mb-2">Como usar o Simulador:</h3>
             <ul className="list-disc list-inside space-y-2 text-sm">
               <li>Crie sequências manualmente ou gere aleatoriamente</li>
-              <li>A IA analisará e sugerirá espécies possíveis</li>
-              <li>Cada sequência recebe um nome único</li>
-              <li>Use o chat para aprender mais sobre DNA</li>
+              <li>A IA criará uma espécie única baseada no DNA</li>
+              <li>Observe padrões especiais que geram traços únicos</li>
+              <li>Explore diferentes combinações para resultados diversos</li>
             </ul>
           </div>
         )}
@@ -217,14 +269,50 @@ export default function DNABuilder() {
           {sequences.map(seq => (
             <div key={seq.id} className="bg-black/30 p-4 rounded-lg">
               <div className="flex items-start justify-between">
-                <div>
-                  <h4 className="text-lg font-semibold text-purple-300">{seq.name}</h4>
-                  <p className="font-mono text-sm mt-1">{seq.sequence}</p>
-                  <p className="text-sm text-white/70 mt-2">{seq.description}</p>
+                <div className="flex-1">
+                  <div className="flex items-baseline gap-3">
+                    <h4 className="text-lg font-semibold text-purple-300">{seq.name}</h4>
+                    <span className="text-sm text-purple-400 italic">{seq.scientificName}</span>
+                  </div>
+                  <p className="font-mono text-sm mt-2 text-blue-300">{seq.sequence}</p>
+                  <p className="text-sm mt-2">{seq.description}</p>
+                  
+                  <div className="grid grid-cols-2 gap-4 mt-4">
+                    <div>
+                      <h5 className="font-semibold text-purple-200">Habitat</h5>
+                      <p className="text-sm">{seq.habitat}</p>
+                    </div>
+                    <div>
+                      <h5 className="font-semibold text-purple-200">Tamanho</h5>
+                      <p className="text-sm">{seq.size}</p>
+                    </div>
+                    <div>
+                      <h5 className="font-semibold text-purple-200">Alimentação</h5>
+                      <p className="text-sm">{seq.diet}</p>
+                    </div>
+                    <div>
+                      <h5 className="font-semibold text-purple-200">Comportamento</h5>
+                      <p className="text-sm">{seq.behavior}</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <h5 className="font-semibold text-purple-200 mb-2">Traços Especiais</h5>
+                    <div className="flex flex-wrap gap-2">
+                      {seq.traits.map((trait, index) => (
+                        <span
+                          key={index}
+                          className="bg-purple-500/30 text-purple-200 px-2 py-1 rounded-full text-sm"
+                        >
+                          {trait}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
                 <button
                   onClick={() => deleteSequence(seq.id)}
-                  className="text-red-400 hover:text-red-300 transition"
+                  className="text-red-400 hover:text-red-300 transition ml-4"
                 >
                   <Trash2 className="w-5 h-5" />
                 </button>
