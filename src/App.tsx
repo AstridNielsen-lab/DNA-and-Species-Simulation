@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Dna, FlaskRound as Flask, Atom } from 'lucide-react';
+import { Dna, FlaskRound as Flask, Atom, Book } from 'lucide-react';
 import DNABuilder from './components/DNABuilder';
 import SpeciesCrossing from './components/SpeciesCrossing';
 import ElementMixer from './components/ElementMixer';
+import ResearchAssistant from './components/ResearchAssistant';
 import SplashScreen from './components/SplashScreen';
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'dna' | 'species' | 'elements'>('dna');
+  const [activeTab, setActiveTab] = useState<'dna' | 'species' | 'elements' | 'research'>('dna');
 
   return (
     <>
@@ -61,6 +62,14 @@ function App() {
                 <Atom className="w-5 h-5" />
                 Misturador de Elementos
               </button>
+              <button
+                onClick={() => setActiveTab('research')}
+                className={`px-4 py-3 flex items-center gap-2 transition
+                  ${activeTab === 'research' ? 'text-purple-300 border-b-2 border-purple-400' : 'text-white/70 hover:text-white'}`}
+              >
+                <Book className="w-5 h-5" />
+                Pesquisa Científica
+              </button>
             </div>
           </div>
         </nav>
@@ -69,6 +78,7 @@ function App() {
           {activeTab === 'dna' && <DNABuilder />}
           {activeTab === 'species' && <SpeciesCrossing />}
           {activeTab === 'elements' && <ElementMixer />}
+          {activeTab === 'research' && <ResearchAssistant />}
         </main>
       </div>
     </>
