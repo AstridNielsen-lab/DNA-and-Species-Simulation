@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FlaskRound as Flask, Plus } from 'lucide-react';
+import AIChat from './AIChat';
 
 interface Element {
   symbol: string;
@@ -49,12 +50,21 @@ export default function ElementMixer() {
     setResult('');
   };
 
+  const generateElementPrompt = (message: string) => `
+    Act as a chemistry expert. Help the user understand chemical elements and their combinations.
+    Provide:
+    1. Detailed explanation of the elements or compounds mentioned
+    2. Chemical properties and reactions
+    3. Real-world applications and interesting facts
+    
+    User request: ${message}
+  `;
+
   return (
     <div className="space-y-6">
       <div className="bg-white/10 rounded-lg p-6">
         <h2 className="text-2xl font-bold mb-4">Element Mixer</h2>
 
-        {/* Element Selection */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {ELEMENTS.map(element => (
             <button
@@ -69,7 +79,6 @@ export default function ElementMixer() {
           ))}
         </div>
 
-        {/* Current Mix */}
         <div className="bg-black/30 p-4 rounded-lg mb-4">
           <h3 className="font-semibold mb-2">Current Mix:</h3>
           <div className="flex flex-wrap gap-2">
@@ -105,7 +114,6 @@ export default function ElementMixer() {
         </div>
       </div>
 
-      {/* Results */}
       {result && (
         <div className="bg-white/10 rounded-lg p-6">
           <h3 className="text-xl font-bold mb-4">Result</h3>
@@ -114,6 +122,11 @@ export default function ElementMixer() {
           </div>
         </div>
       )}
+
+      <AIChat
+        initialMessage="Hello! I'm your chemistry expert. I can help you understand elements, compounds, and their properties. What would you like to know about chemistry?"
+        generatePrompt={generateElementPrompt}
+      />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
+import AIChat from './AIChat';
 
 const NUCLEOTIDES = ['A', 'T', 'C', 'G'];
 
@@ -27,12 +28,21 @@ export default function DNABuilder() {
     setSequences(prev => prev.filter(seq => seq.id !== id));
   };
 
+  const generateDNAPrompt = (message: string) => `
+    Act as a DNA sequence expert. The user wants help with DNA sequences.
+    Provide detailed information about DNA sequences, including:
+    1. Explanation of the requested DNA pattern or structure
+    2. Suggested sequence using A, T, C, G bases
+    3. Scientific explanation of the sequence properties
+    
+    User request: ${message}
+  `;
+
   return (
     <div className="space-y-6">
       <div className="bg-white/10 rounded-lg p-6">
         <h2 className="text-2xl font-bold mb-4">DNA Sequence Builder</h2>
         
-        {/* Nucleotide Buttons */}
         <div className="flex gap-2 mb-4">
           {NUCLEOTIDES.map(nucleotide => (
             <button
@@ -45,7 +55,6 @@ export default function DNABuilder() {
           ))}
         </div>
 
-        {/* Current Sequence */}
         <div className="bg-black/30 p-4 rounded-lg font-mono mb-4">
           <p className="text-xl tracking-wider">{currentSequence || 'Start building your sequence...'}</p>
         </div>
@@ -60,7 +69,6 @@ export default function DNABuilder() {
         </button>
       </div>
 
-      {/* Saved Sequences */}
       <div className="bg-white/10 rounded-lg p-6">
         <h3 className="text-xl font-bold mb-4">Saved Sequences</h3>
         <div className="space-y-2">
@@ -80,6 +88,11 @@ export default function DNABuilder() {
           )}
         </div>
       </div>
+
+      <AIChat
+        initialMessage="Hello! I'm your DNA sequence expert. I can help you understand DNA patterns, suggest sequences, and explain their properties. What would you like to know about DNA?"
+        generatePrompt={generateDNAPrompt}
+      />
     </div>
   );
 }
