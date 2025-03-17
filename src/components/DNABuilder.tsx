@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, HelpCircle } from 'lucide-react';
+import { Plus, Trash2, HelpCircle, Info } from 'lucide-react';
 import AIChat from './AIChat';
 
 const NUCLEOTIDES = ['A', 'T', 'C', 'G'];
@@ -13,6 +13,7 @@ export default function DNABuilder() {
   const [sequences, setSequences] = useState<DNASequence[]>([]);
   const [currentSequence, setCurrentSequence] = useState('');
   const [showHelp, setShowHelp] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
 
   const addNucleotide = (nucleotide: string) => {
     setCurrentSequence(prev => prev + nucleotide);
@@ -44,14 +45,66 @@ export default function DNABuilder() {
       <div className="bg-white/10 rounded-lg p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold">Construtor de DNA</h2>
-          <button
-            onClick={() => setShowHelp(!showHelp)}
-            className="text-purple-300 hover:text-purple-200 transition"
-            title="Ajuda"
-          >
-            <HelpCircle className="w-6 h-6" />
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowTutorial(!showTutorial)}
+              className="text-blue-300 hover:text-blue-200 transition"
+              title="Tutorial"
+            >
+              <Info className="w-6 h-6" />
+            </button>
+            <button
+              onClick={() => setShowHelp(!showHelp)}
+              className="text-purple-300 hover:text-purple-200 transition"
+              title="Ajuda"
+            >
+              <HelpCircle className="w-6 h-6" />
+            </button>
+          </div>
         </div>
+
+        {showTutorial && (
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-4">
+            <h3 className="font-bold text-blue-300 mb-2">Tutorial do Construtor de DNA</h3>
+            <div className="space-y-4 text-sm">
+              <div>
+                <h4 className="font-semibold text-blue-200">1. Bases Nitrogenadas</h4>
+                <p>O DNA é composto por quatro bases nitrogenadas:</p>
+                <ul className="list-disc list-inside mt-1 ml-2">
+                  <li><span className="text-blue-300">A (Adenina)</span> - pareia com T</li>
+                  <li><span className="text-blue-300">T (Timina)</span> - pareia com A</li>
+                  <li><span className="text-blue-300">C (Citosina)</span> - pareia com G</li>
+                  <li><span className="text-blue-300">G (Guanina)</span> - pareia com C</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-semibold text-blue-200">2. Construindo Sequências</h4>
+                <p>Para criar uma sequência de DNA:</p>
+                <ol className="list-decimal list-inside mt-1 ml-2">
+                  <li>Clique nos botões A, T, C, G para adicionar bases</li>
+                  <li>A sequência aparecerá no campo abaixo</li>
+                  <li>Clique em "Salvar Sequência" quando terminar</li>
+                </ol>
+              </div>
+              <div>
+                <h4 className="font-semibold text-blue-200">3. Regras Importantes</h4>
+                <ul className="list-disc list-inside mt-1 ml-2">
+                  <li>As bases sempre pareiam A-T e C-G</li>
+                  <li>A ordem das bases determina a informação genética</li>
+                  <li>Sequências podem ter qualquer comprimento</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-semibold text-blue-200">4. Dicas</h4>
+                <ul className="list-disc list-inside mt-1 ml-2">
+                  <li>Use o assistente IA para tirar dúvidas</li>
+                  <li>Salve várias sequências para comparar</li>
+                  <li>Experimente diferentes combinações</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
 
         {showHelp && (
           <div className="bg-black/30 rounded-lg p-4 mb-4">
