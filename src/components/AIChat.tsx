@@ -15,13 +15,12 @@ interface AIChatProps {
 const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent";
 const API_KEY = "AIzaSyAuFi5KtPsMJI5IC8c5FjvYD5IbuBdwH_U";
 
-// Função para limpar o texto de marcações
 const cleanTextForSpeech = (text: string) => {
   return text
-    .replace(/[*_#`]/g, '') // Remove marcações markdown
-    .replace(/\[[^\]]*\]/g, '') // Remove links markdown
-    .replace(/\([^)]*\)/g, '') // Remove URLs
-    .replace(/\s+/g, ' ') // Normaliza espaços
+    .replace(/[*_#`]/g, '')
+    .replace(/\[[^\]]*\]/g, '')
+    .replace(/\([^)]*\)/g, '')
+    .replace(/\s+/g, ' ')
     .trim();
 };
 
@@ -33,8 +32,7 @@ export default function AIChat({ initialMessage, generatePrompt, autoSpeak = fal
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
-  const speechSynthesis = window.speechSynthesis;
-  const recognition = useRef<any>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (autoSpeak) {
@@ -42,7 +40,13 @@ export default function AIChat({ initialMessage, generatePrompt, autoSpeak = fal
     }
   }, []);
 
-  if ('webkitSpeechRecognition' in window && !recognition.current) {
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const recognition = useRef<any>(null);
+
+  if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window && !recognition.current) {
     recognition.current = new (window as any).webkitSpeechRecognition();
     recognition.current.continuous = false;
     recognition.current.lang = 'pt-BR';
@@ -64,20 +68,20 @@ export default function AIChat({ initialMessage, generatePrompt, autoSpeak = fal
   };
 
   const speakMessage = (text: string) => {
-    const cleanText = cleanTextForSpeech(text);
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.lang = 'pt-BR';
-    speechSynthesis.speak(utterance);
+    if ('speechSynthesis' in window) {
+      const cleanText = cleanTextForSpeech(text);
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      utterance.lang = 'pt-BR';
+      window.speechSynthesis.speak(utterance);
+    }
   };
 
   const generateResponse = async (userMessage: string) => {
     try {
-      // Criar um histórico de conversa formatado
       const conversationHistory = messages.map(msg => 
         `${msg.role === 'user' ? 'Usuário' : 'Assistente'}: ${msg.content}`
       ).join('\n');
 
-      // Incluir o histórico no prompt
       const fullPrompt = `
         Histórico da conversa:
         ${conversationHistory}
@@ -102,6 +106,10 @@ export default function AIChat({ initialMessage, generatePrompt, autoSpeak = fal
         })
       });
 
+      if (!response.ok) {
+        throw new Error('Erro na resposta da API');
+      }
+
       const data = await response.json();
       return data.candidates[0].content.parts[0].text;
     } catch (error) {
@@ -119,10 +127,19 @@ export default function AIChat({ initialMessage, generatePrompt, autoSpeak = fal
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setIsLoading(true);
 
-    const aiResponse = await generateResponse(userMessage);
-    setMessages(prev => [...prev, { role: 'assistant', content: aiResponse }]);
-    setIsLoading(false);
-    speakMessage(aiResponse);
+    try {
+      const aiResponse = await generateResponse(userMessage);
+      setMessages(prev => [...prev, { role: 'assistant', content: aiResponse }]);
+      speakMessage(aiResponse);
+    } catch (error) {
+      console.error('Error:', error);
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: 'Desculpe, ocorreu um erro. Por favor, tente novamente.' 
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -166,7 +183,7 @@ export default function AIChat({ initialMessage, generatePrompt, autoSpeak = fal
                   : 'bg-gray-700'
               }`}
             >
-              <pre className="whitespace-pre-wrap text-sm">
+              <pre className="whitespace-pre-wrap text-sm font-sans">
                 {message.content}
               </pre>
               {message.role === 'assistant' && (
@@ -192,6 +209,7 @@ export default function AIChat({ initialMessage, generatePrompt, autoSpeak = fal
             </div>
           </div>
         )}
+        <div ref={messagesEndRef} />
       </div>
 
       <form onSubmit={handleSubmit} className="flex gap-2">

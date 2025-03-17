@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import { Search, Book, HelpCircle, ExternalLink, Loader2 } from 'lucide-react';
-import axios from 'axios';
-import { parseString } from 'xml2js';
 import AIChat from './AIChat';
 
 interface Article {
@@ -30,33 +28,40 @@ export default function ResearchAssistant() {
   const [loading, setLoading] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const searchArxiv = async (query: string) => {
+  const searchArxiv = async () => {
+    if (!searchQuery.trim()) return;
+
     try {
       setLoading(true);
       setError(null);
-      
-      const response = await axios.get(`https://export.arxiv.org/api/query?search_query=cat:${activeCategory}+AND+all:${query}&start=0&max_results=10`);
-      
-      parseString(response.data, (err: any, result: any) => {
-        if (err) {
-          throw new Error('Erro ao processar os resultados');
-        }
 
-        const entries = result.feed.entry || [];
-        const parsedArticles: Article[] = entries.map((entry: any) => ({
-          id: entry.id[0],
-          title: entry.title[0].replace(/\n/g, ' ').trim(),
-          authors: entry.author.map((author: any) => author.name[0]),
-          summary: entry.summary[0].replace(/\n/g, ' ').trim(),
-          category: entry.category[0].$.term,
-          link: entry.id[0]
-        }));
+      const response = await fetch(`https://export.arxiv.org/api/query?search_query=cat:${activeCategory}+AND+all:${encodeURIComponent(searchQuery)}&start=0&max_results=10`);
+      
+      if (!response.ok) {
+        throw new Error('Erro ao buscar artigos');
+      }
 
-        setArticles(parsedArticles);
-      });
+      const data = await response.text();
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(data, "text/xml");
+      
+      const entries = Array.from(xmlDoc.getElementsByTagName('entry'));
+      const articles = entries.map(entry => ({
+        id: entry.getElementsByTagName('id')[0]?.textContent || '',
+        title: entry.getElementsByTagName('title')[0]?.textContent?.replace(/\s+/g, ' ').trim() || '',
+        authors: Array.from(entry.getElementsByTagName('author')).map(author => 
+          author.getElementsByTagName('name')[0]?.textContent || ''
+        ),
+        summary: entry.getElementsByTagName('summary')[0]?.textContent?.replace(/\s+/g, ' ').trim() || '',
+        category: activeCategory,
+        link: entry.getElementsByTagName('id')[0]?.textContent || '',
+      }));
+
+      setArticles(articles);
     } catch (err) {
-      setError('Ocorreu um erro ao buscar os artigos. Por favor, tente novamente.');
+      setError('Erro ao buscar artigos. Por favor, tente novamente.');
       console.error('Erro na busca:', err);
     } finally {
       setLoading(false);
@@ -98,9 +103,9 @@ export default function ResearchAssistant() {
             <h3 className="font-bold mb-2">Como usar o Assistente de Pesquisa:</h3>
             <ul className="list-disc list-inside space-y-2 text-sm">
               <li>Selecione uma categoria científica de seu interesse</li>
-              <li>Use o chat para fazer perguntas sobre artigos científicos</li>
-              <li>O assistente buscará e analisará artigos relevantes do arXiv</li>
-              <li>Clique nos links para ler os artigos completos</li>
+              <li>Digite termos de busca para encontrar artigos</li>
+              <li>Use o chat para fazer perguntas sobre os artigos</li>
+              <li>O assistente analisará os artigos e explicará os conceitos</li>
             </ul>
           </div>
         )}
@@ -119,6 +124,24 @@ export default function ResearchAssistant() {
               {category.label}
             </button>
           ))}
+        </div>
+
+        <div className="flex gap-2 mb-6">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Digite termos de busca..."
+            className="flex-1 bg-black/30 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          />
+          <button
+            onClick={searchArxiv}
+            disabled={loading || !searchQuery.trim()}
+            className="bg-purple-500 hover:bg-purple-600 disabled:opacity-50 disabled:hover:bg-purple-500 px-6 py-2 rounded-lg transition flex items-center gap-2"
+          >
+            <Search className="w-4 h-4" />
+            Buscar
+          </button>
         </div>
 
         {error && (
@@ -155,7 +178,7 @@ export default function ResearchAssistant() {
                 <p className="mt-2 text-sm">{article.summary}</p>
                 <div className="mt-2">
                   <span className="text-xs bg-purple-500/30 text-purple-200 px-2 py-1 rounded">
-                    {article.category}
+                    {CATEGORIES.find(c => c.id === article.category)?.label || article.category}
                   </span>
                 </div>
               </div>
