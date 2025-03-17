@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useId } from 'react';
 import { Search, Book, HelpCircle, ExternalLink, Loader2 } from 'lucide-react';
 import AIChat from './AIChat';
 
@@ -22,6 +22,9 @@ const CATEGORIES = [
   { id: 'econ', label: 'Economia' }
 ];
 
+const CORS_PROXY = 'https://api.allorigins.win/get?url=';
+const ATOM_NS = 'http://www.w3.org/2005/Atom';
+
 export default function ResearchAssistant() {
   const [activeCategory, setActiveCategory] = useState<string>('physics');
   const [articles, setArticles] = useState<Article[]>([]);
@@ -30,39 +33,86 @@ export default function ResearchAssistant() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Gerar IDs únicos para acessibilidade
+  const inputId = useId();
+  const categoryGroupId = useId();
+
   const searchArxiv = async () => {
     if (!searchQuery.trim()) return;
 
     try {
       setLoading(true);
       setError(null);
+      setArticles([]);
 
-      const response = await fetch(`https://export.arxiv.org/api/query?search_query=cat:${activeCategory}+AND+all:${encodeURIComponent(searchQuery)}&start=0&max_results=10`);
-      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+      const encodedUrl = encodeURIComponent(
+        `http://export.arxiv.org/api/query?search_query=cat:${activeCategory}+AND+all:${encodeURIComponent(searchQuery)}&start=0&max_results=10`
+      );
+
+      const response = await fetch(
+        `${CORS_PROXY}${encodedUrl}`,
+        {
+          headers: {
+            'User-Agent': 'ResearchAssistant/1.0 (contact@example.com)',
+            'Content-Type': 'application/xml'
+          },
+          signal: controller.signal
+        }
+      );
+
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
-        throw new Error('Erro ao buscar artigos');
+        throw new Error(`Erro HTTP: ${response.status}`);
       }
 
-      const data = await response.text();
-      const parser = new DOMParser();
-      const xmlDoc = parser.parseFromString(data, "text/xml");
-      
-      const entries = Array.from(xmlDoc.getElementsByTagName('entry'));
-      const articles = entries.map(entry => ({
-        id: entry.getElementsByTagName('id')[0]?.textContent || '',
-        title: entry.getElementsByTagName('title')[0]?.textContent?.replace(/\s+/g, ' ').trim() || '',
-        authors: Array.from(entry.getElementsByTagName('author')).map(author => 
-          author.getElementsByTagName('name')[0]?.textContent || ''
-        ),
-        summary: entry.getElementsByTagName('summary')[0]?.textContent?.replace(/\s+/g, ' ').trim() || '',
-        category: activeCategory,
-        link: entry.getElementsByTagName('id')[0]?.textContent || '',
-      }));
+      const data = await response.json();
+      const rawXML = data.contents;
 
-      setArticles(articles);
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(rawXML, "text/xml");
+
+      // Verificar erros de parsing
+      const parserError = xmlDoc.querySelector('parsererror');
+      if (parserError) {
+        throw new Error('Erro ao processar resposta XML');
+      }
+
+      const entries = Array.from(xmlDoc.getElementsByTagNameNS(ATOM_NS, 'entry'));
+      
+      const parsedArticles = entries.map(entry => {
+        const id = entry.getElementsByTagNameNS(ATOM_NS, 'id')[0]?.textContent || '';
+        const title = entry.getElementsByTagNameNS(ATOM_NS, 'title')[0]?.textContent?.replace(/\n/g, ' ').trim() || '';
+        const authors = Array.from(entry.getElementsByTagNameNS(ATOM_NS, 'author')).map(author => 
+          author.getElementsByTagNameNS(ATOM_NS, 'name')[0]?.textContent?.trim() || 'Autor desconhecido'
+        );
+        const summary = entry.getElementsByTagNameNS(ATOM_NS, 'summary')[0]?.textContent?.replace(/\n/g, ' ').trim() || '';
+        
+        return {
+          id,
+          title,
+          authors,
+          summary,
+          category: activeCategory,
+          link: id.replace('http://', 'https://')
+        };
+      });
+
+      setArticles(parsedArticles);
+      if (parsedArticles.length === 0) {
+        setError('Nenhum artigo encontrado com esses critérios de busca');
+      }
     } catch (err) {
-      setError('Erro ao buscar artigos. Por favor, tente novamente.');
-      console.error('Erro na busca:', err);
+      const errorMessage = err instanceof Error ? 
+        (err.name === 'AbortError' ? 'Tempo limite excedido (30s)' : 
+        err.message.replace('Failed to fetch', 'Erro de conexão')) : 
+        'Erro desconhecido';
+      
+      setError(`Erro na busca: ${errorMessage}`);
+      console.error('Erro detalhado:', err);
     } finally {
       setLoading(false);
     }
@@ -93,6 +143,7 @@ export default function ResearchAssistant() {
             onClick={() => setShowHelp(!showHelp)}
             className="text-purple-300 hover:text-purple-200 transition"
             title="Ajuda"
+            aria-label="Mostrar ajuda"
           >
             <HelpCircle className="w-6 h-6" />
           </button>
@@ -100,26 +151,37 @@ export default function ResearchAssistant() {
 
         {showHelp && (
           <div className="bg-black/30 rounded-lg p-4 mb-4">
-            <h3 className="font-bold mb-2">Como usar o Assistente de Pesquisa:</h3>
+            <h3 className="font-bold mb-2">Como usar:</h3>
             <ul className="list-disc list-inside space-y-2 text-sm">
-              <li>Selecione uma categoria científica de seu interesse</li>
-              <li>Digite termos de busca para encontrar artigos</li>
-              <li>Use o chat para fazer perguntas sobre os artigos</li>
-              <li>O assistente analisará os artigos e explicará os conceitos</li>
+              <li>Selecione uma categoria científica</li>
+              <li>Digite termos de busca relevantes</li>
+              <li>Clique em Buscar ou pressione Enter</li>
+              <li>Clique em "Ver Artigo" para acessar o conteúdo completo</li>
             </ul>
           </div>
         )}
 
-        <div className="flex flex-wrap gap-2 mb-6">
+        <div 
+          role="group" 
+          aria-labelledby={categoryGroupId}
+          className="flex flex-wrap gap-2 mb-6"
+        >
+          <span id={categoryGroupId} className="sr-only">
+            Categorias científicas
+          </span>
           {CATEGORIES.map(category => (
             <button
               key={category.id}
+              id={`category-${category.id}`}
+              name="category"
+              value={category.id}
               onClick={() => setActiveCategory(category.id)}
               className={`px-4 py-2 rounded-lg transition ${
                 activeCategory === category.id
                   ? 'bg-purple-500 text-white'
                   : 'bg-black/30 text-white/70 hover:bg-black/40'
               }`}
+              aria-pressed={activeCategory === category.id}
             >
               {category.label}
             </button>
@@ -127,19 +189,30 @@ export default function ResearchAssistant() {
         </div>
 
         <div className="flex gap-2 mb-6">
+          <label htmlFor={inputId} className="sr-only">
+            Buscar artigos científicos
+          </label>
           <input
+            id={inputId}
+            name="searchQuery"
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Digite termos de busca..."
             className="flex-1 bg-black/30 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            onKeyUp={(e) => e.key === 'Enter' && searchArxiv()}
           />
           <button
             onClick={searchArxiv}
             disabled={loading || !searchQuery.trim()}
             className="bg-purple-500 hover:bg-purple-600 disabled:opacity-50 disabled:hover:bg-purple-500 px-6 py-2 rounded-lg transition flex items-center gap-2"
+            aria-label="Executar busca"
           >
-            <Search className="w-4 h-4" />
+            {loading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Search className="w-4 h-4" />
+            )}
             Buscar
           </button>
         </div>
@@ -156,7 +229,7 @@ export default function ResearchAssistant() {
           </div>
         )}
 
-        {articles.length > 0 && (
+        {articles.length > 0 ? (
           <div className="space-y-4">
             {articles.map(article => (
               <div key={article.id} className="bg-black/30 p-4 rounded-lg">
@@ -166,7 +239,7 @@ export default function ResearchAssistant() {
                     href={article.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-purple-300 hover:text-purple-200 transition flex items-center gap-1"
+                    className="text-purple-300 hover:text-purple-200 transition flex items-center gap-1 shrink-0"
                   >
                     <ExternalLink className="w-4 h-4" />
                     Ver Artigo
@@ -184,6 +257,12 @@ export default function ResearchAssistant() {
               </div>
             ))}
           </div>
+        ) : (
+          !loading && !error && (
+            <div className="text-center py-8 text-white/50">
+              Nenhum resultado para exibir
+            </div>
+          )
         )}
       </div>
 
