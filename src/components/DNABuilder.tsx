@@ -1,8 +1,67 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, HelpCircle, Info, Dna as DnaIcon, Sparkles } from 'lucide-react';
+import { Plus, Trash2, HelpCircle, Info, Dna as DnaIcon, Sparkles, Skull, Bird, Fish, Dog } from 'lucide-react';
 import AIChat from './AIChat';
 
-const NUCLEOTIDES = ['A', 'T', 'C', 'G'];
+// Sequências de DNA reais/simuladas para diferentes espécies
+const PREDEFINED_SEQUENCES = {
+  // Dinossauros
+  dinossauros: [
+    {
+      name: 'Tyrannosaurus Rex',
+      sequence: 'ATGCCGTACAGGCTAATCGCTAGCTAGATCGATCGATCGTAGCTAGCTAGCTGATCGATCGTAGCTAGCTAA',
+      description: 'Grande predador do Cretáceo',
+      category: 'Dinossauro'
+    },
+    {
+      name: 'Velociraptor',
+      sequence: 'GCTAGCTAGCTAGCTGATCGATCGTAGCTAGCTAATGCCGTACAGGCTAATCGCTAGCTAGATCGATCGAT',
+      description: 'Predador ágil e inteligente',
+      category: 'Dinossauro'
+    },
+    {
+      name: 'Brachiosaurus',
+      sequence: 'TAGCTGATCGATCGTAGCTAGCTAAGCTAGCTAGCTAGCTGATCGATCGTAGCTAGCTAATGCCGTACAGG',
+      description: 'Herbívoro de pescoço longo',
+      category: 'Dinossauro'
+    }
+  ],
+  // Animais Modernos
+  modernos: [
+    {
+      name: 'Leão',
+      sequence: 'CTAGCTGATCGATCGTAGCTAGCTAATGCCGTACAGGCTAATCGCTAGCTAGATCGATCGATCGTAGCTAG',
+      description: 'Rei da selva',
+      category: 'Felino'
+    },
+    {
+      name: 'Águia',
+      sequence: 'GATCGATCGTAGCTAGCTAATGCCGTACAGGCTAATCGCTAGCTAGATCGATCGATCGTAGCTAGCTAGCT',
+      description: 'Ave de rapina',
+      category: 'Ave'
+    },
+    {
+      name: 'Tubarão Branco',
+      sequence: 'CGATCGATCGTAGCTAGCTAGCTGATCGATCGTAGCTAGCTAATGCCGTACAGGCTAATCGCTAGCTAGAT',
+      description: 'Predador marinho',
+      category: 'Peixe'
+    }
+  ],
+  // Criaturas Híbridas Teóricas
+  hibridos: [
+    {
+      name: 'Aquila Rex',
+      sequence: 'ATGCCGTACAGGCTAATCGCTAGCTAGATCGATCGATCGTAGCTAGCTAGCTGATCGATCGTAGCTAGCTAA',
+      description: 'Híbrido teórico de Águia e T-Rex',
+      category: 'Híbrido'
+    },
+    {
+      name: 'Felis Raptor',
+      sequence: 'GCTAGCTAGCTAGCTGATCGATCGTAGCTAGCTAATGCCGTACAGGCTAATCGCTAGCTAGATCGATCGAT',
+      description: 'Híbrido teórico de Felino e Velociraptor',
+      category: 'Híbrido'
+    }
+  ]
+};
 
 // Exemplos de características baseadas em padrões de DNA
 const DNA_PATTERNS = {
@@ -15,16 +74,23 @@ const DNA_PATTERNS = {
   'TTTT': 'Longevidade elevada',
   'AGAG': 'Metabolismo acelerado',
   'CTCT': 'Sentidos aguçados',
-  'TATA': 'Reprodução rápida'
+  'TATA': 'Reprodução rápida',
+  'CGAT': 'Capacidade de camuflagem',
+  'TAGC': 'Resistência a doenças',
+  'GACT': 'Adaptabilidade climática',
+  'CATA': 'Velocidade aumentada',
+  'GTAC': 'Força física excepcional'
 };
 
 // Prefixos e sufixos para nomes científicos
 const SCIENTIFIC_PREFIXES = [
-  'Neo', 'Xeno', 'Mega', 'Ultra', 'Crypto', 'Proto', 'Hyper', 'Meta', 'Quantum', 'Bio'
+  'Neo', 'Xeno', 'Mega', 'Ultra', 'Crypto', 'Proto', 'Hyper', 'Meta', 'Quantum', 'Bio',
+  'Giga', 'Apex', 'Omega', 'Alpha', 'Delta'
 ];
 
 const SCIENTIFIC_SUFFIXES = [
-  'saurus', 'morph', 'raptor', 'titan', 'genesis', 'forma', 'species', 'zoa', 'phyta', 'bacteria'
+  'saurus', 'morph', 'raptor', 'titan', 'genesis', 'forma', 'species', 'zoa', 'phyta', 'bacteria',
+  'rex', 'felis', 'dactyl', 'therium', 'pteros'
 ];
 
 interface DNASequence {
@@ -38,6 +104,7 @@ interface DNASequence {
   size: string;
   diet: string;
   behavior: string;
+  parentSpecies?: string[];
 }
 
 export default function DNABuilder() {
@@ -46,18 +113,52 @@ export default function DNABuilder() {
   const [showHelp, setShowHelp] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<'dinossauros' | 'modernos' | 'hibridos'>('dinossauros');
+  const [parentSpecies, setParentSpecies] = useState<string[]>([]);
 
   const addNucleotide = (nucleotide: string) => {
     setCurrentSequence(prev => prev + nucleotide);
+  };
+
+  const selectPresetSequence = (sequence: typeof PREDEFINED_SEQUENCES[keyof typeof PREDEFINED_SEQUENCES][0]) => {
+    setCurrentSequence(sequence.sequence);
+    setParentSpecies(prev => [...prev, sequence.name]);
   };
 
   const generateRandomSequence = () => {
     const length = Math.floor(Math.random() * 20) + 10; // 10-30 bases
     let sequence = '';
     for (let i = 0; i < length; i++) {
-      sequence += NUCLEOTIDES[Math.floor(Math.random() * NUCLEOTIDES.length)];
+      sequence += ['A', 'T', 'C', 'G'][Math.floor(Math.random() * 4)];
     }
     setCurrentSequence(sequence);
+  };
+
+  const mixSequences = () => {
+    if (parentSpecies.length < 2) return;
+    
+    const sequences = parentSpecies.map(name => {
+      const allSequences = [...PREDEFINED_SEQUENCES.dinossauros, ...PREDEFINED_SEQUENCES.modernos, ...PREDEFINED_SEQUENCES.hibridos];
+      return allSequences.find(s => s.name === name)?.sequence || '';
+    }).filter(Boolean);
+
+    if (sequences.length < 2) return;
+
+    // Criar uma sequência híbrida misturando partes das sequências parentais
+    let hybridSequence = '';
+    const maxLength = Math.max(...sequences.map(s => s.length));
+    
+    for (let i = 0; i < maxLength; i++) {
+      const validBases = sequences
+        .map(s => s[i])
+        .filter(Boolean);
+      
+      if (validBases.length > 0) {
+        hybridSequence += validBases[Math.floor(Math.random() * validBases.length)];
+      }
+    }
+
+    setCurrentSequence(hybridSequence);
   };
 
   const analyzeSequence = async () => {
@@ -90,12 +191,14 @@ export default function DNABuilder() {
             parts: [{
               text: `Com base nesta sequência de DNA: ${currentSequence}
               
-              Crie uma criatura fictícia com as seguintes características já identificadas:
+              Crie uma criatura híbrida considerando as espécies parentais: ${parentSpecies.join(', ')}
+              
+              Características já identificadas:
               ${traits.join(', ')}
               
               Responda em formato JSON com os campos:
               {
-                "name": "Nome comum da espécie",
+                "name": "Nome comum da espécie híbrida",
                 "description": "Descrição física detalhada",
                 "habitat": "Ambiente onde vive",
                 "size": "Tamanho aproximado",
@@ -103,7 +206,7 @@ export default function DNABuilder() {
                 "behavior": "Comportamento característico"
               }
               
-              Seja criativo e mantenha consistência com os traços genéticos identificados.`
+              Seja criativo e mantenha consistência com os traços genéticos identificados e as espécies parentais.`
             }]
           }]
         })
@@ -126,10 +229,12 @@ export default function DNABuilder() {
         habitat: analysis.habitat,
         size: analysis.size,
         diet: analysis.diet,
-        behavior: analysis.behavior
+        behavior: analysis.behavior,
+        parentSpecies: [...parentSpecies]
       }]);
 
       setCurrentSequence('');
+      setParentSpecies([]);
     } catch (error) {
       console.error('Erro:', error);
       alert('Erro ao analisar a sequência. Tente novamente.');
@@ -143,17 +248,18 @@ export default function DNABuilder() {
   };
 
   const generateDNAPrompt = (message: string) => `
-    Atue como um especialista em genética e biologia molecular. O usuário está explorando sequências de DNA.
+    Atue como um especialista em genética e biologia molecular, focando em evolução e hibridização de espécies.
     
     Contexto atual:
     - Sequência atual: ${currentSequence}
+    - Espécies parentais: ${parentSpecies.join(', ')}
     - Sequências salvas: ${sequences.map(s => s.sequence).join(', ')}
     
     Forneça:
-    1. Explicações sobre padrões de DNA
-    2. Sugestões de sequências interessantes
-    3. Análise de possíveis características
-    4. Correlações com espécies conhecidas
+    1. Análise da viabilidade da hibridização
+    2. Possíveis características da criatura resultante
+    3. Comparação com espécies existentes
+    4. Adaptações necessárias para sobrevivência
     
     Solicitação do usuário: ${message}
   `;
@@ -164,7 +270,7 @@ export default function DNABuilder() {
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <DnaIcon className="w-6 h-6" />
-            Simulador de DNA
+            Simulador de DNA e Hibridização
           </h2>
           <div className="flex gap-2">
             <button
@@ -189,29 +295,27 @@ export default function DNABuilder() {
             <h3 className="font-bold text-blue-300 mb-2">Tutorial do Simulador de DNA</h3>
             <div className="space-y-4 text-sm">
               <div>
-                <h4 className="font-semibold text-blue-200">1. Criando Sequências</h4>
+                <h4 className="font-semibold text-blue-200">1. Seleção de Espécies</h4>
                 <ul className="list-disc list-inside mt-1 ml-2">
-                  <li>Use os botões A, T, C, G para construir manualmente</li>
-                  <li>Use "Gerar Aleatório" para sequências automáticas</li>
-                  <li>A IA analisará e criará espécies únicas</li>
+                  <li>Escolha espécies predefinidas</li>
+                  <li>Combine diferentes espécies</li>
+                  <li>Analise sequências de DNA</li>
                 </ul>
               </div>
               <div>
-                <h4 className="font-semibold text-blue-200">2. Padrões Especiais</h4>
+                <h4 className="font-semibold text-blue-200">2. Hibridização</h4>
                 <ul className="list-disc list-inside mt-1 ml-2">
-                  <li>ATAT: Resistência térmica</li>
-                  <li>GCGC: Regeneração</li>
-                  <li>TGCA: Adaptabilidade</li>
-                  <li>E muito mais!</li>
+                  <li>Selecione duas ou mais espécies</li>
+                  <li>Combine seus DNAs</li>
+                  <li>Analise resultados possíveis</li>
                 </ul>
               </div>
               <div>
-                <h4 className="font-semibold text-blue-200">3. Análise Detalhada</h4>
+                <h4 className="font-semibold text-blue-200">3. Análise de Resultados</h4>
                 <ul className="list-disc list-inside mt-1 ml-2">
-                  <li>Nome científico único</li>
-                  <li>Características físicas</li>
-                  <li>Habitat e comportamento</li>
-                  <li>Traços especiais</li>
+                  <li>Características da nova espécie</li>
+                  <li>Traços herdados</li>
+                  <li>Viabilidade da criatura</li>
                 </ul>
               </div>
             </div>
@@ -222,16 +326,72 @@ export default function DNABuilder() {
           <div className="bg-black/30 rounded-lg p-4 mb-4">
             <h3 className="font-bold mb-2">Como usar o Simulador:</h3>
             <ul className="list-disc list-inside space-y-2 text-sm">
-              <li>Crie sequências manualmente ou gere aleatoriamente</li>
-              <li>A IA criará uma espécie única baseada no DNA</li>
-              <li>Observe padrões especiais que geram traços únicos</li>
-              <li>Explore diferentes combinações para resultados diversos</li>
+              <li>Selecione espécies predefinidas ou crie sequências manualmente</li>
+              <li>Combine diferentes espécies para criar híbridos</li>
+              <li>Analise as características resultantes</li>
+              <li>Explore possibilidades evolutivas</li>
             </ul>
           </div>
         )}
+
+        <div className="mb-6">
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={() => setSelectedCategory('dinossauros')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${
+                selectedCategory === 'dinossauros'
+                  ? 'bg-purple-500 text-white'
+                  : 'bg-black/30 text-white/70 hover:bg-black/40'
+              }`}
+            >
+              <Skull className="w-5 h-5" />
+              Dinossauros
+            </button>
+            <button
+              onClick={() => setSelectedCategory('modernos')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${
+                selectedCategory === 'modernos'
+                  ? 'bg-purple-500 text-white'
+                  : 'bg-black/30 text-white/70 hover:bg-black/40'
+              }`}
+            >
+              <Dog className="w-5 h-5" />
+              Animais Modernos
+            </button>
+            <button
+              onClick={() => setSelectedCategory('hibridos')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${
+                selectedCategory === 'hibridos'
+                  ? 'bg-purple-500 text-white'
+                  : 'bg-black/30 text-white/70 hover:bg-black/40'
+              }`}
+            >
+              <DnaIcon className="w-5 h-5" />
+              Híbridos
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+            {PREDEFINED_SEQUENCES[selectedCategory].map((species, index) => (
+              <button
+                key={index}
+                onClick={() => selectPresetSequence(species)}
+                className={`bg-black/30 p-4 rounded-lg text-left hover:bg-black/40 transition ${
+                  parentSpecies.includes(species.name) ? 'ring-2 ring-purple-500' : ''
+                }`}
+              >
+                <h4 className="font-semibold text-purple-300">{species.name}</h4>
+                <p className="text-sm text-white/70">{species.description}</p>
+                <p className="text-xs font-mono mt-2 text-blue-300 truncate">
+                  {species.sequence}
+                </p>
+              </button>
+            ))}
+          </div>
+        </div>
         
         <div className="flex gap-2 mb-4">
-          {NUCLEOTIDES.map(nucleotide => (
+          {['A', 'T', 'C', 'G'].map(nucleotide => (
             <button
               key={nucleotide}
               onClick={() => addNucleotide(nucleotide)}
@@ -247,9 +407,28 @@ export default function DNABuilder() {
             <Sparkles className="w-5 h-5" />
             Gerar Aleatório
           </button>
+          {parentSpecies.length >= 2 && (
+            <button
+              onClick={mixSequences}
+              className="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg transition flex items-center gap-2"
+            >
+              <Plus className="w-5 h-5" />
+              Misturar DNAs
+            </button>
+          )}
         </div>
 
         <div className="bg-black/30 p-4 rounded-lg font-mono mb-4">
+          <div className="mb-2">
+            <h4 className="text-sm font-semibold text-purple-300">Espécies Selecionadas:</h4>
+            <div className="flex flex-wrap gap-2 mt-1">
+              {parentSpecies.map((species, index) => (
+                <span key={index} className="bg-purple-500/30 px-2 py-1 rounded text-sm">
+                  {species}
+                </span>
+              ))}
+            </div>
+          </div>
           <p className="text-xl tracking-wider">{currentSequence || 'Comece a construir sua sequência...'}</p>
         </div>
 
@@ -274,6 +453,20 @@ export default function DNABuilder() {
                     <h4 className="text-lg font-semibold text-purple-300">{seq.name}</h4>
                     <span className="text-sm text-purple-400 italic">{seq.scientificName}</span>
                   </div>
+                  
+                  {seq.parentSpecies && seq.parentSpecies.length > 0 && (
+                    <div className="mt-2">
+                      <h5 className="text-sm font-semibold text-purple-200">Espécies Parentais:</h5>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {seq.parentSpecies.map((parent, index) => (
+                          <span key={index} className="bg-purple-500/30 px-2 py-1 rounded text-sm">
+                            {parent}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <p className="font-mono text-sm mt-2 text-blue-300">{seq.sequence}</p>
                   <p className="text-sm mt-2">{seq.description}</p>
                   
@@ -326,7 +519,7 @@ export default function DNABuilder() {
       </div>
 
       <AIChat
-        initialMessage="Olá! Sou seu assistente de simulação de DNA. Posso ajudar você a entender sequências de DNA, sugerir combinações interessantes e explicar como diferentes padrões podem resultar em características específicas. O que você gostaria de explorar?"
+        initialMessage="Olá! Sou seu assistente de simulação de DNA e hibridização de espécies. Posso ajudar você a entender as combinações de DNA, prever características de híbridos e explorar possibilidades evolutivas. O que você gostaria de explorar?"
         generatePrompt={generateDNAPrompt}
         autoSpeak={true}
       />
