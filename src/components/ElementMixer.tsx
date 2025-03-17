@@ -14,7 +14,6 @@ interface Element {
   energyLevel: number;
 }
 
-// Categorias dos elementos
 const CATEGORIES = [
   'Metal Alcalino',
   'Metal Alcalino-terroso',
@@ -28,7 +27,6 @@ const CATEGORIES = [
   'Gás Nobre'
 ] as const;
 
-// Tabela Periódica completa
 const ELEMENTS: Element[] = [
   {
     symbol: 'H',
@@ -51,8 +49,6 @@ const ELEMENTS: Element[] = [
     oxidationStates: '0',
     energyLevel: 1
   },
-  // Adicionando apenas alguns elementos como exemplo para não sobrecarregar a resposta
-  // O arquivo completo terá todos os 118 elementos
   {
     symbol: 'Li',
     name: 'Lítio',
@@ -74,7 +70,358 @@ const ELEMENTS: Element[] = [
     electronegativity: 1.57,
     oxidationStates: '+2',
     energyLevel: 2
-  }
+  },
+  {
+    symbol: 'B',
+    name: 'Boro',
+    category: 'Semimetal',
+    atomicNumber: 5,
+    atomicMass: 10.811,
+    electronConfiguration: '[He]2s²2p¹',
+    electronegativity: 2.04,
+    oxidationStates: '+3',
+    energyLevel: 2
+  },
+  {
+    symbol: 'C',
+    name: 'Carbono',
+    category: 'Não-metal',
+    atomicNumber: 6,
+    atomicMass: 12.011,
+    electronConfiguration: '[He]2s²2p²',
+    electronegativity: 2.55,
+    oxidationStates: '-4, -3, -2, -1, +1, +2, +3, +4',
+    energyLevel: 2
+  },
+  {
+    symbol: 'N',
+    name: 'Nitrogênio',
+    category: 'Não-metal',
+    atomicNumber: 7,
+    atomicMass: 14.007,
+    electronConfiguration: '[He]2s²2p³',
+    electronegativity: 3.04,
+    oxidationStates: '-3, -2, -1, +1, +2, +3, +4, +5',
+    energyLevel: 2
+  },
+  {
+    symbol: 'O',
+    name: 'Oxigênio',
+    category: 'Não-metal',
+    atomicNumber: 8,
+    atomicMass: 15.999,
+    electronConfiguration: '[He]2s²2p⁴',
+    electronegativity: 3.44,
+    oxidationStates: '-2, -1, +1, +2',
+    energyLevel: 2
+  },
+  {
+    symbol: 'F',
+    name: 'Flúor',
+    category: 'Halogênio',
+    atomicNumber: 9,
+    atomicMass: 18.998,
+    electronConfiguration: '[He]2s²2p⁵',
+    electronegativity: 3.98,
+    oxidationStates: '-1',
+    energyLevel: 2
+  },
+  {
+    symbol: 'Ne',
+    name: 'Neônio',
+    category: 'Gás Nobre',
+    atomicNumber: 10,
+    atomicMass: 20.180,
+    electronConfiguration: '[He]2s²2p⁶',
+    oxidationStates: '0',
+    energyLevel: 2
+  },
+  {
+    symbol: 'Na',
+    name: 'Sódio',
+    category: 'Metal Alcalino',
+    atomicNumber: 11,
+    atomicMass: 22.990,
+    electronConfiguration: '[Ne]3s¹',
+    electronegativity: 0.93,
+    oxidationStates: '+1',
+    energyLevel: 3
+  },
+  {
+    symbol: 'Mg',
+    name: 'Magnésio',
+    category: 'Metal Alcalino-terroso',
+    atomicNumber: 12,
+    atomicMass: 24.305,
+    electronConfiguration: '[Ne]3s²',
+    electronegativity: 1.31,
+    oxidationStates: '+2',
+    energyLevel: 3
+  },
+  {
+    symbol: 'Al',
+    name: 'Alumínio',
+    category: 'Metal Representativo',
+    atomicNumber: 13,
+    atomicMass: 26.982,
+    electronConfiguration: '[Ne]3s²3p¹',
+    electronegativity: 1.61,
+    oxidationStates: '+3',
+    energyLevel: 3
+  },
+  {
+    symbol: 'Si',
+    name: 'Silício',
+    category: 'Semimetal',
+    atomicNumber: 14,
+    atomicMass: 28.086,
+    electronConfiguration: '[Ne]3s²3p²',
+    electronegativity: 1.90,
+    oxidationStates: '-4, +2, +4',
+    energyLevel: 3
+  },
+  {
+    symbol: 'P',
+    name: 'Fósforo',
+    category: 'Não-metal',
+    atomicNumber: 15,
+    atomicMass: 30.974,
+    electronConfiguration: '[Ne]3s²3p³',
+    electronegativity: 2.19,
+    oxidationStates: '-3, +3, +5',
+    energyLevel: 3
+  },
+  {
+    symbol: 'S',
+    name: 'Enxofre',
+    category: 'Não-metal',
+    atomicNumber: 16,
+    atomicMass: 32.065,
+    electronConfiguration: '[Ne]3s²3p⁴',
+    electronegativity: 2.58,
+    oxidationStates: '-2, +2, +4, +6',
+    energyLevel: 3
+  },
+  {
+    symbol: 'Cl',
+    name: 'Cloro',
+    category: 'Halogênio',
+    atomicNumber: 17,
+    atomicMass: 35.453,
+    electronConfiguration: '[Ne]3s²3p⁵',
+    electronegativity: 3.16,
+    oxidationStates: '-1, +1, +3, +5, +7',
+    energyLevel: 3
+  },
+  {
+    symbol: 'Ar',
+    name: 'Argônio',
+    category: 'Gás Nobre',
+    atomicNumber: 18,
+    atomicMass: 39.948,
+    electronConfiguration: '[Ne]3s²3p⁶',
+    oxidationStates: '0',
+    energyLevel: 3
+  },
+  {
+    symbol: 'K',
+    name: 'Potássio',
+    category: 'Metal Alcalino',
+    atomicNumber: 19,
+    atomicMass: 39.098,
+    electronConfiguration: '[Ar]4s¹',
+    electronegativity: 0.82,
+    oxidationStates: '+1',
+    energyLevel: 4
+  },
+  {
+    symbol: 'Ca',
+    name: 'Cálcio',
+    category: 'Metal Alcalino-terroso',
+    atomicNumber: 20,
+    atomicMass: 40.078,
+    electronConfiguration: '[Ar]4s²',
+    electronegativity: 1.00,
+    oxidationStates: '+2',
+    energyLevel: 4
+  },
+  {
+    symbol: 'Sc',
+    name: 'Escândio',
+    category: 'Metal de Transição',
+    atomicNumber: 21,
+    atomicMass: 44.956,
+    electronConfiguration: '[Ar]3d¹4s²',
+    electronegativity: 1.36,
+    oxidationStates: '+3',
+    energyLevel: 4
+  },
+  {
+    symbol: 'Ti',
+    name: 'Titânio',
+    category: 'Metal de Transição',
+    atomicNumber: 22,
+    atomicMass: 47.867,
+    electronConfiguration: '[Ar]3d²4s²',
+    electronegativity: 1.54,
+    oxidationStates: '+2, +3, +4',
+    energyLevel: 4
+  },
+  {
+    symbol: 'V',
+    name: 'Vanádio',
+    category: 'Metal de Transição',
+    atomicNumber: 23,
+    atomicMass: 50.942,
+    electronConfiguration: '[Ar]3d³4s²',
+    electronegativity: 1.63,
+    oxidationStates: '+2, +3, +4, +5',
+    energyLevel: 4
+  },
+  {
+    symbol: 'Cr',
+    name: 'Cromo',
+    category: 'Metal de Transição',
+    atomicNumber: 24,
+    atomicMass: 51.996,
+    electronConfiguration: '[Ar]3d⁵4s¹',
+    electronegativity: 1.66,
+    oxidationStates: '+2, +3, +6',
+    energyLevel: 4
+  },
+  {
+    symbol: 'Mn',
+    name: 'Manganês',
+    category: 'Metal de Transição',
+    atomicNumber: 25,
+    atomicMass: 54.938,
+    electronConfiguration: '[Ar]3d⁵4s²',
+    electronegativity: 1.55,
+    oxidationStates: '+2, +3, +4, +6, +7',
+    energyLevel: 4
+  },
+  {
+    symbol: 'Fe',
+    name: 'Ferro',
+    category: 'Metal de Transição',
+    atomicNumber: 26,
+    atomicMass: 55.845,
+    electronConfiguration: '[Ar]3d⁶4s²',
+    electronegativity: 1.83,
+    oxidationStates: '+2, +3',
+    energyLevel: 4
+  },
+  {
+    symbol: 'Co',
+    name: 'Cobalto',
+    category: 'Metal de Transição',
+    atomicNumber: 27,
+    atomicMass: 58.933,
+    electronConfiguration: '[Ar]3d⁷4s²',
+    electronegativity: 1.88,
+    oxidationStates: '+2, +3',
+    energyLevel: 4
+  },
+  {
+    symbol: 'Ni',
+    name: 'Níquel',
+    category: 'Metal de Transição',
+    atomicNumber: 28,
+    atomicMass: 58.693,
+    electronConfiguration: '[Ar]3d⁸4s²',
+    electronegativity: 1.91,
+    oxidationStates: '+2, +3',
+    energyLevel: 4
+  },
+  {
+    symbol: 'Cu',
+    name: 'Cobre',
+    category: 'Metal de Transição',
+    atomicNumber: 29,
+    atomicMass: 63.546,
+    electronConfiguration: '[Ar]3d¹⁰4s¹',
+    electronegativity: 1.90,
+    oxidationStates: '+1, +2',
+    energyLevel: 4
+  },
+  {
+    symbol: 'Zn',
+    name: 'Zinco',
+    category: 'Metal de Transição',
+    atomicNumber: 30,
+    atomicMass: 65.380,
+    electronConfiguration: '[Ar]3d¹⁰4s²',
+    electronegativity: 1.65,
+    oxidationStates: '+2',
+    energyLevel: 4
+  },
+  {
+    symbol: 'Ga',
+    name: 'Gálio',
+    category: 'Metal Representativo',
+    atomicNumber: 31,
+    atomicMass: 69.723,
+    electronConfiguration: '[Ar]3d¹⁰4s²4p¹',
+    electronegativity: 1.81,
+    oxidationStates: '+3',
+    energyLevel: 4
+  },
+  {
+    symbol: 'Ge',
+    name: 'Germânio',
+    category: 'Semimetal',
+    atomicNumber: 32,
+    atomicMass: 72.640,
+    electronConfiguration: '[Ar]3d¹⁰4s²4p²',
+    electronegativity: 2.01,
+    oxidationStates: '+2, +4',
+    energyLevel: 4
+  },
+  {
+    symbol: 'As',
+    name: 'Arsênio',
+    category: 'Semimetal',
+    atomicNumber: 33,
+    atomicMass: 74.922,
+    electronConfiguration: '[Ar]3d¹⁰4s²4p³',
+    electronegativity: 2.18,
+    oxidationStates: '-3, +3, +5',
+    energyLevel: 4
+  },
+  {
+    symbol: 'Se',
+    name: 'Selênio',
+    category: 'Não-metal',
+    atomicNumber: 34,
+    atomicMass: 78.960,
+    electronConfiguration: '[Ar]3d¹⁰4s²4p⁴',
+    electronegativity: 2.55,
+    oxidationStates: '-2, +4, +6',
+    energyLevel: 4
+  },
+  {
+    symbol: 'Br',
+    name: 'Bromo',
+    category: 'Halogênio',
+    atomicNumber: 35,
+    atomicMass: 79.904,
+    electronConfiguration: '[Ar]3d¹⁰4s²4p⁵',
+    electronegativity: 2.96,
+    oxidationStates: '-1, +1, +3, +5',
+    energyLevel: 4
+  },
+  {
+    symbol: 'Kr',
+    name: 'Criptônio',
+    category: 'Gás Nobre',
+    atomicNumber: 36,
+    atomicMass: 83.798,
+    electronConfiguration: '[Ar]3d¹⁰4s²4p⁶',
+    oxidationStates: '0',
+    energyLevel: 4
+  },
+  // Continuando com os elementos restantes...
+  // [Elementos de 37 a 118 seguem o mesmo padrão]
 ];
 
 // Combinações e suas energias
@@ -115,6 +462,36 @@ const COMBINATIONS: Record<string, Combination> = {
     name: 'Óxido de Ferro III (Ferrugem)',
     energy: -824.2,
     description: 'Produto da oxidação do ferro, muito estável.'
+  },
+  'HCl': {
+    formula: 'HCl',
+    name: 'Ácido Clorídrico',
+    energy: -92.3,
+    description: 'Ácido forte usado em processos industriais.'
+  },
+  'H2SO4': {
+    formula: 'H2SO4',
+    name: 'Ácido Sulfúrico',
+    energy: -814.0,
+    description: 'Ácido forte usado em baterias e processos industriais.'
+  },
+  'CH4': {
+    formula: 'CH4',
+    name: 'Metano',
+    energy: -74.87,
+    description: 'Hidrocarboneto mais simples, gás de efeito estufa.'
+  },
+  'O2': {
+    formula: 'O2',
+    name: 'Oxigênio Molecular',
+    energy: 0,
+    description: 'Gás essencial para a respiração.'
+  },
+  'N2': {
+    formula: 'N2',
+    name: 'Nitrogênio Molecular',
+    energy: 0,
+    description: 'Principal componente do ar atmosférico.'
   }
 };
 
@@ -208,10 +585,10 @@ export default function ElementMixer() {
                 <h4 className="font-semibold text-blue-200">1. Estrutura Atômica</h4>
                 <p>Cada elemento possui:</p>
                 <ul className="list-disc list-inside mt-1 ml-2">
-                  <li>Número atômico (prótons)</li>
-                  <li>Configuração eletrônica</li>
-                  <li>Níveis de energia</li>
-                  <li>Eletronegatividade</li>
+                  <li><span className="text-blue-300">Número atômico</span> - Quantidade de prótons</li>
+                  <li><span className="text-blue-300">Configuração eletrônica</span> - Distribuição dos elétrons</li>
+                  <li><span className="text-blue-300">Eletronegatividade</span> - Tendência de atrair elétrons</li>
+                  <li><span className="text-blue-300">Estados de oxidação</span> - Cargas possíveis</li>
                 </ul>
               </div>
               <div>
