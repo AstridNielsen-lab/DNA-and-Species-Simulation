@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { Send, Bot, Mic, Volume2 } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Send, Bot, Mic, Volume2, HelpCircle } from 'lucide-react';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -9,20 +9,38 @@ interface Message {
 interface AIChatProps {
   initialMessage: string;
   generatePrompt: (message: string) => string;
+  autoSpeak?: boolean;
 }
 
 const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent";
 const API_KEY = "AIzaSyAuFi5KtPsMJI5IC8c5FjvYD5IbuBdwH_U";
 
-export default function AIChat({ initialMessage, generatePrompt }: AIChatProps) {
+// Função para limpar o texto de marcações
+const cleanTextForSpeech = (text: string) => {
+  return text
+    .replace(/[*_#`]/g, '') // Remove marcações markdown
+    .replace(/\[[^\]]*\]/g, '') // Remove links markdown
+    .replace(/\([^)]*\)/g, '') // Remove URLs
+    .replace(/\s+/g, ' ') // Normaliza espaços
+    .trim();
+};
+
+export default function AIChat({ initialMessage, generatePrompt, autoSpeak = false }: AIChatProps) {
   const [messages, setMessages] = useState<Message[]>([
     { role: 'assistant', content: initialMessage }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const speechSynthesis = window.speechSynthesis;
   const recognition = useRef<any>(null);
+
+  useEffect(() => {
+    if (autoSpeak) {
+      speakMessage(initialMessage);
+    }
+  }, []);
 
   if ('webkitSpeechRecognition' in window && !recognition.current) {
     recognition.current = new (window as any).webkitSpeechRecognition();
@@ -46,13 +64,30 @@ export default function AIChat({ initialMessage, generatePrompt }: AIChatProps) 
   };
 
   const speakMessage = (text: string) => {
-    const utterance = new SpeechSynthesisUtterance(text);
+    const cleanText = cleanTextForSpeech(text);
+    const utterance = new SpeechSynthesisUtterance(cleanText);
     utterance.lang = 'pt-BR';
     speechSynthesis.speak(utterance);
   };
 
   const generateResponse = async (userMessage: string) => {
     try {
+      // Criar um histórico de conversa formatado
+      const conversationHistory = messages.map(msg => 
+        `${msg.role === 'user' ? 'Usuário' : 'Assistente'}: ${msg.content}`
+      ).join('\n');
+
+      // Incluir o histórico no prompt
+      const fullPrompt = `
+        Histórico da conversa:
+        ${conversationHistory}
+
+        Nova mensagem do usuário:
+        ${userMessage}
+
+        ${generatePrompt(userMessage)}
+      `;
+
       const response = await fetch(`${API_URL}?key=${API_KEY}`, {
         method: 'POST',
         headers: {
@@ -61,7 +96,7 @@ export default function AIChat({ initialMessage, generatePrompt }: AIChatProps) 
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: generatePrompt(userMessage)
+              text: fullPrompt
             }]
           }]
         })
@@ -87,14 +122,36 @@ export default function AIChat({ initialMessage, generatePrompt }: AIChatProps) 
     const aiResponse = await generateResponse(userMessage);
     setMessages(prev => [...prev, { role: 'assistant', content: aiResponse }]);
     setIsLoading(false);
+    speakMessage(aiResponse);
   };
 
   return (
     <div className="bg-white/10 rounded-lg p-6">
-      <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-        <Bot className="w-6 h-6" />
-        Assistente IA
-      </h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold flex items-center gap-2">
+          <Bot className="w-6 h-6" />
+          Assistente IA
+        </h2>
+        <button
+          onClick={() => setShowHelp(!showHelp)}
+          className="text-purple-300 hover:text-purple-200 transition"
+          title="Ajuda"
+        >
+          <HelpCircle className="w-6 h-6" />
+        </button>
+      </div>
+
+      {showHelp && (
+        <div className="bg-black/30 rounded-lg p-4 mb-4">
+          <h3 className="font-bold mb-2">Como usar o Assistente IA:</h3>
+          <ul className="list-disc list-inside space-y-2 text-sm">
+            <li>Digite sua pergunta no campo de texto ou use o botão do microfone para falar</li>
+            <li>Clique no botão de alto-falante para ouvir as respostas</li>
+            <li>O assistente irá guiar você durante o uso da plataforma</li>
+            <li>Faça perguntas sobre DNA, espécies ou elementos químicos</li>
+          </ul>
+        </div>
+      )}
 
       <div className="bg-black/30 rounded-lg p-4 mb-4 h-[400px] overflow-y-auto space-y-4">
         {messages.map((message, index) => (

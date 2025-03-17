@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, HelpCircle } from 'lucide-react';
 import AIChat from './AIChat';
 
 const NUCLEOTIDES = ['A', 'T', 'C', 'G'];
@@ -12,6 +12,7 @@ interface DNASequence {
 export default function DNABuilder() {
   const [sequences, setSequences] = useState<DNASequence[]>([]);
   const [currentSequence, setCurrentSequence] = useState('');
+  const [showHelp, setShowHelp] = useState(false);
 
   const addNucleotide = (nucleotide: string) => {
     setCurrentSequence(prev => prev + nucleotide);
@@ -29,19 +30,41 @@ export default function DNABuilder() {
   };
 
   const generateDNAPrompt = (message: string) => `
-    Act as a DNA sequence expert. The user wants help with DNA sequences.
-    Provide detailed information about DNA sequences, including:
-    1. Explanation of the requested DNA pattern or structure
-    2. Suggested sequence using A, T, C, G bases
-    3. Scientific explanation of the sequence properties
+    Atue como um especialista em sequências de DNA. O usuário precisa de ajuda com sequências de DNA.
+    Forneça informações detalhadas sobre sequências de DNA, incluindo:
+    1. Explicação do padrão ou estrutura de DNA solicitado
+    2. Sequência sugerida usando as bases A, T, C, G
+    3. Explicação científica das propriedades da sequência
     
-    User request: ${message}
+    Solicitação do usuário: ${message}
   `;
 
   return (
     <div className="space-y-6">
       <div className="bg-white/10 rounded-lg p-6">
-        <h2 className="text-2xl font-bold mb-4">DNA Sequence Builder</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold">Construtor de DNA</h2>
+          <button
+            onClick={() => setShowHelp(!showHelp)}
+            className="text-purple-300 hover:text-purple-200 transition"
+            title="Ajuda"
+          >
+            <HelpCircle className="w-6 h-6" />
+          </button>
+        </div>
+
+        {showHelp && (
+          <div className="bg-black/30 rounded-lg p-4 mb-4">
+            <h3 className="font-bold mb-2">Como usar o Construtor de DNA:</h3>
+            <ul className="list-disc list-inside space-y-2 text-sm">
+              <li>Clique nos botões A, T, C, G para construir sua sequência de DNA</li>
+              <li>Cada botão representa uma base nitrogenada do DNA</li>
+              <li>Use o botão "Salvar Sequência" para guardar sua sequência</li>
+              <li>Você pode criar várias sequências diferentes</li>
+              <li>Use o assistente IA para tirar dúvidas sobre DNA</li>
+            </ul>
+          </div>
+        )}
         
         <div className="flex gap-2 mb-4">
           {NUCLEOTIDES.map(nucleotide => (
@@ -56,7 +79,7 @@ export default function DNABuilder() {
         </div>
 
         <div className="bg-black/30 p-4 rounded-lg font-mono mb-4">
-          <p className="text-xl tracking-wider">{currentSequence || 'Start building your sequence...'}</p>
+          <p className="text-xl tracking-wider">{currentSequence || 'Comece a construir sua sequência...'}</p>
         </div>
 
         <button
@@ -65,12 +88,12 @@ export default function DNABuilder() {
           className="flex items-center gap-2 bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:hover:bg-green-500 px-4 py-2 rounded-lg transition"
         >
           <Plus className="w-5 h-5" />
-          Save Sequence
+          Salvar Sequência
         </button>
       </div>
 
       <div className="bg-white/10 rounded-lg p-6">
-        <h3 className="text-xl font-bold mb-4">Saved Sequences</h3>
+        <h3 className="text-xl font-bold mb-4">Sequências Salvas</h3>
         <div className="space-y-2">
           {sequences.map(seq => (
             <div key={seq.id} className="flex items-center justify-between bg-black/30 p-4 rounded-lg">
@@ -84,14 +107,15 @@ export default function DNABuilder() {
             </div>
           ))}
           {sequences.length === 0 && (
-            <p className="text-white/70 italic">No sequences saved yet</p>
+            <p className="text-white/70 italic">Nenhuma sequência salva ainda</p>
           )}
         </div>
       </div>
 
       <AIChat
-        initialMessage="Hello! I'm your DNA sequence expert. I can help you understand DNA patterns, suggest sequences, and explain their properties. What would you like to know about DNA?"
+        initialMessage="Olá! Eu sou seu especialista em DNA. Posso ajudar você a entender padrões de DNA, sugerir sequências e explicar suas propriedades. O que você gostaria de saber sobre DNA?"
         generatePrompt={generateDNAPrompt}
+        autoSpeak={true}
       />
     </div>
   );
