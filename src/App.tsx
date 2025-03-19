@@ -7,6 +7,8 @@ import ElementMixer from './components/ElementMixer';
 import ResearchAssistant from './components/ResearchAssistant';
 import SplashScreen from './components/SplashScreen';
 import WelcomeForm from './components/WelcomeForm';
+import LoginButton from './components/LoginButton'; // Importe o componente de login
+
 
 interface UserData {
   name: string;
