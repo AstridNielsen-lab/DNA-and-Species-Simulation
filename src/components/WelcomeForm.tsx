@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { User, Mail, Phone, ArrowRight } from 'lucide-react';
 
 interface WelcomeFormProps {
@@ -20,6 +20,10 @@ declare global {
   }
 }
 
+interface GoogleCredentialResponse {
+  credential?: string;
+}
+
 const CLIENT_ID = "6686456196-725lc9rcv7ooibi3ce3n2s3aqoc60d0g.apps.googleusercontent.com"; // Substitua pelo seu Client ID
 
 export default function WelcomeForm({ onComplete }: WelcomeFormProps) {
@@ -31,8 +35,11 @@ export default function WelcomeForm({ onComplete }: WelcomeFormProps) {
   const [googleLoaded, setGoogleLoaded] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(false);
+  const googleButtonRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     const script = document.createElement('script');
     script.src = 'https://accounts.google.com/gsi/client';
     script.async = true;
@@ -43,37 +50,44 @@ export default function WelcomeForm({ onComplete }: WelcomeFormProps) {
       setGoogleLoaded(true);
     };
 
+    script.onerror = () => {
+      console.error('Failed to load Google Sign-In script.');
+      alert('Falha ao carregar o Google Sign-In. Por favor, recarregue a página.');
+      setGoogleLoaded(false);
+    };
+
     return () => {
       document.body.removeChild(script);
     };
   }, []);
 
-  useEffect(() => {
-    if (googleLoaded && window.google) {
+    useEffect(() => {
+    if (googleLoaded && typeof window !== 'undefined' && window.google) {
       const redirectUri = `${window.location.origin}/api/auth/callback/google`;
+        window.google.accounts.id.initialize({
+          client_id: CLIENT_ID,
+          callback: handleCredentialResponse,
+          ux_mode: "redirect",
+          redirect_uri: redirectUri
+        });
 
-      window.google.accounts.id.initialize({
-        client_id: CLIENT_ID,
-        callback: handleCredentialResponse,
-        ux_mode: "redirect",
-        redirect_uri: redirectUri,
-      });
-
-      const buttonDiv = document.getElementById('google-sign-in');
-      if (buttonDiv) {
-        window.google.accounts.id.renderButton(buttonDiv, {
+      if (googleButtonRef.current) {
+        window.google.accounts.id.renderButton(googleButtonRef.current, {
           theme: "outline",
           size: "large",
-          width: buttonDiv.offsetWidth,
+          width: googleButtonRef.current.offsetWidth,
         });
       }
-
-      window.google.accounts.id.prompt();
-
     }
   }, [googleLoaded]);
 
-  const handleCredentialResponse = async (response: any) => {
+  useEffect(() => {
+    if(isLoggedIn && typeof window !== 'undefined' && window.google){
+       window.google.accounts.id.prompt();
+    }
+  }, [isLoggedIn])
+
+  const handleCredentialResponse = async (response: GoogleCredentialResponse) => {
     setLoading(true);
     try {
       if (!response.credential) {
@@ -123,21 +137,19 @@ export default function WelcomeForm({ onComplete }: WelcomeFormProps) {
   };
 
   const handleLogout = () => {
-    if (window.google) {
+    if (typeof window !== 'undefined' && window.google) {
       window.google.accounts.id.revoke(localStorage.getItem('google_token') || '', (success: boolean) => {
         if (success) {
           setIsLoggedIn(false);
           localStorage.removeItem('google_token');
-          localStorage.removeItem('biosim_user_data');
           console.log('Logged out successfully');
         } else {
           console.error('Failed to revoke access token.');
         }
       });
-    } else {
-      setIsLoggedIn(false);
-      localStorage.removeItem('biosim_user_data');
     }
+    setIsLoggedIn(false);
+    localStorage.removeItem('biosim_user_data');
   };
 
   if (isLoggedIn) {
@@ -166,7 +178,7 @@ export default function WelcomeForm({ onComplete }: WelcomeFormProps) {
           </p>
 
           <div className="mb-4">
-            <div id="google-sign-in" className="w-full h-[40px] bg-white/5 rounded-lg opacity-0 transition-opacity duration-500"></div>
+            <div id="google-sign-in" ref={googleButtonRef} className="w-full h-[40px] bg-white/5 rounded-lg opacity-0 transition-opacity duration-500"></div>
             {/* Mensagem de carregamento para o Google Sign-In */}
             {!googleLoaded && (
               <p className="text-center text-purple-200 text-sm">Carregando Google Sign-In...</p>
@@ -263,4 +275,3 @@ export default function WelcomeForm({ onComplete }: WelcomeFormProps) {
     </div>
   );
 }
-
