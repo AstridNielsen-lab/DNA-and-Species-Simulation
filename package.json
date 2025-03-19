@@ -2,7 +2,7 @@
   "name": "biosim-lab",
   "private": true,
   "version": "1.0.0",
-  "type": "module",
+  
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -13,14 +13,16 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.39.7",
     "axios": "^1.6.7",
+    "cookie": "^1.0.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "express": "^4.18.3",
-    "google-auth-library": "^9.6.3",
+    "express": "^4.21.2",
+    "google-auth-library": "^9.15.1",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-helmet-async": "^2.0.4",
+    "uuid": "^11.1.0",
     "xml2js": "^0.6.2"
   },
   "devDependencies": {
@@ -40,5 +42,18 @@
     "tailwindcss": "^3.4.1",
     "typescript": "^5.2.2",
     "vite": "^5.1.5"
-  }
+  },
+  "description": "Este repositório contém o código-fonte e a documentação para um projeto de análise de características físicas humanas a partir de sequências de DNA.  O projeto foca na identificação de correlações entre genes específicos e traços físicos, considerando possíveis variações e mutações.  Atualmente, o sistema ainda não possui uma sequência de DNA carregada para análise, mas a estrutura está preparada para receber e processar tais dados.",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AstridNielsen-lab/DNA-and-Species-Simulation.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AstridNielsen-lab/DNA-and-Species-Simulation/issues"
+  },
+  "homepage": "https://github.com/AstridNielsen-lab/DNA-and-Species-Simulation#readme"
 }
