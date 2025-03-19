@@ -6,10 +6,20 @@ interface Message {
   content: string;
 }
 
+interface UserData {
+  name: string;
+  email: string;
+  whatsapp: string;
+  firstVisit: string;
+  lastVisit: string;
+  visits: number;
+}
+
 interface AIChatProps {
   initialMessage: string;
   generatePrompt: (message: string) => string;
   autoSpeak?: boolean;
+  userData?: UserData | null;
 }
 
 const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent";
@@ -24,9 +34,12 @@ const cleanTextForSpeech = (text: string) => {
     .trim();
 };
 
-export default function AIChat({ initialMessage, generatePrompt, autoSpeak = false }: AIChatProps) {
+export default function AIChat({ initialMessage, generatePrompt, autoSpeak = false, userData }: AIChatProps) {
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: initialMessage }
+    { 
+      role: 'assistant', 
+      content: userData ? `Olá ${userData.name}! ${initialMessage}` : initialMessage 
+    }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -35,16 +48,33 @@ export default function AIChat({ initialMessage, generatePrompt, autoSpeak = fal
   const [isAutoSpeakEnabled, setIsAutoSpeakEnabled] = useState(autoSpeak);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const currentlySpeakingRef = useRef<SpeechSynthesisUtterance | null>(null);
-
-  useEffect(() => {
-    if (autoSpeak && isAutoSpeakEnabled) {
-      speakMessage(initialMessage);
-    }
-  }, []);
+  const [hasSpokenInitialMessage, setHasSpokenInitialMessage] = useState(false);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  useEffect(() => {
+    // Verificar se é a primeira visita do dia
+    const lastVisit = localStorage.getItem('biosim_last_visit');
+    const today = new Date().toDateString();
+    
+    if (!lastVisit || lastVisit !== today) {
+      // Se for primeira visita do dia, permitir fala inicial
+      setHasSpokenInitialMessage(false);
+      localStorage.setItem('biosim_last_visit', today);
+    } else {
+      // Se não for primeira visita do dia, não falar mensagem inicial
+      setHasSpokenInitialMessage(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (autoSpeak && isAutoSpeakEnabled && !hasSpokenInitialMessage) {
+      speakMessage(messages[0].content);
+      setHasSpokenInitialMessage(true);
+    }
+  }, [autoSpeak, isAutoSpeakEnabled, messages, hasSpokenInitialMessage]);
 
   const recognition = useRef<any>(null);
 
@@ -78,7 +108,6 @@ export default function AIChat({ initialMessage, generatePrompt, autoSpeak = fal
 
   const speakMessage = (text: string) => {
     if ('speechSynthesis' in window) {
-      // Parar qualquer fala em andamento
       stopSpeaking();
 
       const cleanText = cleanTextForSpeech(text);
@@ -116,6 +145,8 @@ export default function AIChat({ initialMessage, generatePrompt, autoSpeak = fal
         ${userMessage}
 
         ${generatePrompt(userMessage)}
+
+        ${userData ? `Lembre-se de se referir ao usuário como ${userData.name} em suas respostas.` : ''}
       `;
 
       const response = await fetch(`${API_URL}?key=${API_KEY}`, {
@@ -175,7 +206,7 @@ export default function AIChat({ initialMessage, generatePrompt, autoSpeak = fal
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold flex items-center gap-2">
           <Bot className="w-6 h-6" />
-          Assistente IA
+          Assistente IA {userData && `- Olá, ${userData.name}!`}
         </h2>
         <div className="flex items-center gap-4">
           <button
