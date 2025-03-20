@@ -37,8 +37,9 @@ function WelcomeForm({ onComplete }: WelcomeFormProps) {
         window.google.accounts.id.initialize({
           client_id: "6686456196-725lc9rcv7ooibi3ce3n2s3aqoc60d0g.apps.googleusercontent.com",
           callback: handleCredentialResponse,
-          ux_mode: "redirect",
-          redirect_uri: "https://seu-site.com/login-callback",
+          // Remove redirect configuration since we're using popup mode
+          auto_select: false,
+          cancel_on_tap_outside: true
         });
 
         const buttonDiv = document.getElementById('google-sign-in');
@@ -46,7 +47,8 @@ function WelcomeForm({ onComplete }: WelcomeFormProps) {
           window.google.accounts.id.renderButton(buttonDiv, {
             theme: "outline",
             size: "large",
-            width: buttonDiv.offsetWidth
+            width: buttonDiv.offsetWidth,
+            type: "standard"
           });
         }
       }
