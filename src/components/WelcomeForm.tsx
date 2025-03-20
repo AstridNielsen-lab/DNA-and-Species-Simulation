@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Mail, Phone, ArrowRight } from 'lucide-react';
 
 interface WelcomeFormProps {
-  onComplete: (userData: any) => void;
+  onComplete: () => void;
 }
 
 declare global {
@@ -12,19 +12,11 @@ declare global {
         id: {
           initialize: (config: any) => void;
           renderButton: (element: HTMLElement, config: any) => void;
-          prompt: () => void;
-          revoke: (token: string, callback: (success: boolean) => void) => void;
         };
       };
     };
   }
 }
-
-interface GoogleCredentialResponse {
-  credential?: string;
-}
-
-const CLIENT_ID = "6686456196-725lc9rcv7ooibi3ce3n2s3aqoc60d0g.apps.googleusercontent.com"; // Substitua pelo seu Client ID
 
 export default function WelcomeForm({ onComplete }: WelcomeFormProps) {
   const [formData, setFormData] = useState({
@@ -32,14 +24,8 @@ export default function WelcomeForm({ onComplete }: WelcomeFormProps) {
     email: '',
     whatsapp: ''
   });
-  const [googleLoaded, setGoogleLoaded] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const googleButtonRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-
     const script = document.createElement('script');
     script.src = 'https://accounts.google.com/gsi/client';
     script.async = true;
@@ -47,13 +33,23 @@ export default function WelcomeForm({ onComplete }: WelcomeFormProps) {
     document.body.appendChild(script);
 
     script.onload = () => {
-      setGoogleLoaded(true);
-    };
+      if (window.google) {
+        window.google.accounts.id.initialize({
+          client_id: "6686456196-725lc9rcv7ooibi3ce3n2s3aqoc60d0g.apps.googleusercontent.com",
+          callback: handleCredentialResponse,
+          ux_mode: "redirect",
+          redirect_uri: "https://seu-site.com/login-callback",
+        });
 
-    script.onerror = () => {
-      console.error('Failed to load Google Sign-In script.');
-      alert('Falha ao carregar o Google Sign-In. Por favor, recarregue a página.');
-      setGoogleLoaded(false);
+        const buttonDiv = document.getElementById('google-sign-in');
+        if (buttonDiv) {
+          window.google.accounts.id.renderButton(buttonDiv, {
+            theme: "outline",
+            size: "large",
+            width: buttonDiv.offsetWidth
+          });
+        }
+      }
     };
 
     return () => {
@@ -61,111 +57,42 @@ export default function WelcomeForm({ onComplete }: WelcomeFormProps) {
     };
   }, []);
 
-    useEffect(() => {
-    if (googleLoaded && typeof window !== 'undefined' && window.google) {
-      const redirectUri = `${window.location.origin}/api/auth/callback/google`;
-        window.google.accounts.id.initialize({
-          client_id: CLIENT_ID,
-          callback: handleCredentialResponse,
-          ux_mode: "redirect",
-          redirect_uri: redirectUri
-        });
-
-      if (googleButtonRef.current) {
-        window.google.accounts.id.renderButton(googleButtonRef.current, {
-          theme: "outline",
-          size: "large",
-          width: googleButtonRef.current.offsetWidth,
-        });
-      }
-    }
-  }, [googleLoaded]);
-
-  useEffect(() => {
-    if(isLoggedIn && typeof window !== 'undefined' && window.google){
-       window.google.accounts.id.prompt();
-    }
-  }, [isLoggedIn])
-
-  const handleCredentialResponse = async (response: GoogleCredentialResponse) => {
-    setLoading(true);
+  const handleCredentialResponse = (response: any) => {
     try {
-      if (!response.credential) {
-        throw new Error('Credenciais não encontradas na resposta do Google.');
+      const jwtPayload = JSON.parse(atob(response.credential.split('.')[1]));
+      
+      if (!jwtPayload.email) {
+        throw new Error('Email não encontrado');
       }
 
-      const res = await fetch("/api/auth/verify-google-token", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          token: response.credential,
-        }),
-      });
+      localStorage.setItem('biosim_user_data', JSON.stringify({
+        name: jwtPayload.name || '',
+        email: jwtPayload.email,
+        whatsapp: '',
+        firstVisit: new Date().toISOString(),
+        lastVisit: new Date().toISOString(),
+        visits: 1
+      }));
 
-      const data = await res.json();
-
-      if (res.status !== 200) {
-        throw new Error(data.message || 'Erro ao verificar token no servidor');
-      }
-
-      const { user } = data;
-      setIsLoggedIn(true);
-      onComplete(user);
-
-    } catch (error: any) {
+      onComplete();
+    } catch (error) {
       console.error('Erro ao processar login:', error);
       alert('Erro ao fazer login. Por favor, tente novamente.');
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    const userData = {
+    
+    localStorage.setItem('biosim_user_data', JSON.stringify({
       ...formData,
       firstVisit: new Date().toISOString(),
       lastVisit: new Date().toISOString(),
-      visits: 1,
-    };
-    setIsLoggedIn(true);
-    onComplete(userData);
-    setLoading(false);
-  };
+      visits: 1
+    }));
 
-  const handleLogout = () => {
-    if (typeof window !== 'undefined' && window.google) {
-      window.google.accounts.id.revoke(localStorage.getItem('google_token') || '', (success: boolean) => {
-        if (success) {
-          setIsLoggedIn(false);
-          localStorage.removeItem('google_token');
-          console.log('Logged out successfully');
-        } else {
-          console.error('Failed to revoke access token.');
-        }
-      });
-    }
-    setIsLoggedIn(false);
-    localStorage.removeItem('biosim_user_data');
+    onComplete();
   };
-
-  if (isLoggedIn) {
-    return (
-      <div className="fixed inset-0 bg-gray-900 text-white flex flex-col items-center justify-center z-50">
-        <h2 className="text-2xl font-bold mb-4">Bem-vindo de volta!</h2>
-        <p className="text-lg mb-8">Você está logado e pronto para explorar.</p>
-        <button
-          onClick={handleLogout}
-          className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-        >
-          Logout
-        </button>
-      </div>
-    );
-  }
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-indigo-900 to-purple-900 flex items-center justify-center z-50 p-4 overflow-y-auto">
@@ -178,11 +105,7 @@ export default function WelcomeForm({ onComplete }: WelcomeFormProps) {
           </p>
 
           <div className="mb-4">
-            <div id="google-sign-in" ref={googleButtonRef} className="w-full h-[40px] bg-white/5 rounded-lg opacity-0 transition-opacity duration-500"></div>
-            {/* Mensagem de carregamento para o Google Sign-In */}
-            {!googleLoaded && (
-              <p className="text-center text-purple-200 text-sm">Carregando Google Sign-In...</p>
-            )}
+            <div id="google-sign-in" className="w-full h-[40px] bg-white/5 rounded-lg"></div>
             <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-white/20"></div>
@@ -204,7 +127,7 @@ export default function WelcomeForm({ onComplete }: WelcomeFormProps) {
                   type="text"
                   required
                   value={formData.name}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                   placeholder="Seu primeiro nome"
                   className="w-full bg-black/30 border border-purple-500/30 rounded-lg pl-10 pr-4 py-2 text-sm text-white placeholder-purple-300/50 focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
@@ -221,7 +144,7 @@ export default function WelcomeForm({ onComplete }: WelcomeFormProps) {
                   type="email"
                   required
                   value={formData.email}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
+                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                   placeholder="exemplo@email.com"
                   className="w-full bg-black/30 border border-purple-500/30 rounded-lg pl-10 pr-4 py-2 text-sm text-white placeholder-purple-300/50 focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
@@ -238,7 +161,7 @@ export default function WelcomeForm({ onComplete }: WelcomeFormProps) {
                   type="tel"
                   required
                   value={formData.whatsapp}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, whatsapp: e.target.value }))}
+                  onChange={(e) => setFormData(prev => ({ ...prev, whatsapp: e.target.value }))}
                   placeholder="(11) 99999-9999"
                   className="w-full bg-black/30 border border-purple-500/30 rounded-lg pl-10 pr-4 py-2 text-sm text-white placeholder-purple-300/50 focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
@@ -249,14 +172,8 @@ export default function WelcomeForm({ onComplete }: WelcomeFormProps) {
               type="submit"
               className="w-full bg-purple-500 hover:bg-purple-600 text-white rounded-lg py-2 mt-4 flex items-center justify-center gap-2 transition text-sm"
             >
-              {loading ? (
-                <>Carregando...</>
-              ) : (
-                <>
-                  Começar a Explorar
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
+              Começar a Explorar
+              <ArrowRight className="w-4 h-4" />
             </button>
 
             <p className="text-xs text-white/60 text-center mt-3">
@@ -275,3 +192,5 @@ export default function WelcomeForm({ onComplete }: WelcomeFormProps) {
     </div>
   );
 }
+
+export default WelcomeForm
