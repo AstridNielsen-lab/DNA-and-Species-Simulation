@@ -18,7 +18,7 @@ declare global {
   }
 }
 
-export default function WelcomeForm({ onComplete }: WelcomeFormProps) {
+function WelcomeForm({ onComplete }: WelcomeFormProps) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -193,4 +193,4 @@ export default function WelcomeForm({ onComplete }: WelcomeFormProps) {
   );
 }
 
-export default WelcomeForm
+export default WelcomeForm;
